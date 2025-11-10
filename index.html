@@ -24,6 +24,11 @@
             position: fixed;
             width: 100%;
         }
+        #appContainer {
+            /* Use dynamic viewport height for mobile browsers */
+            height: 100vh;
+            height: 100dvh; /* Newer browsers - accounts for mobile browser chrome */
+        }
         canvas {
             /* Ensure canvas is flush against the edges */
             display: block;
@@ -43,7 +48,7 @@
 <body class="bg-gray-200">
 
     <!-- Main container: flex, full-screen, column layout -->
-    <div class="flex flex-col h-screen w-screen">
+    <div id="appContainer" class="flex flex-col h-screen w-screen">
         
         <!-- Canvas: takes up all available space (flex-grow) -->
         <canvas id="paintCanvas" class="flex-grow bg-white cursor-crosshair"></canvas>
@@ -86,6 +91,17 @@
     </div>
 
     <script>
+        // Fix viewport height for mobile browsers
+        function setAppHeight() {
+            const container = document.getElementById('appContainer');
+            const vh = window.innerHeight;
+            container.style.height = vh + 'px';
+        }
+        
+        // Set height on load and resize
+        window.addEventListener('load', setAppHeight);
+        window.addEventListener('resize', setAppHeight);
+        
         window.addEventListener('load', () => {
             const canvas = document.getElementById('paintCanvas');
             const toolbar = document.getElementById('toolbar');
@@ -102,9 +118,10 @@
 
             // Function to set the canvas size and clear it
             function initializeCanvas() {
+                const container = document.getElementById('appContainer');
                 const toolbarHeight = toolbar.offsetHeight;
-                canvas.width = window.innerWidth;
-                canvas.height = window.innerHeight - toolbarHeight;
+                canvas.width = container.clientWidth;
+                canvas.height = container.clientHeight - toolbarHeight;
                 
                 // Set background to white
                 ctx.fillStyle = "white";
@@ -120,9 +137,10 @@
                 // Save canvas content
                 const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
+                const container = document.getElementById('appContainer');
                 const toolbarHeight = toolbar.offsetHeight;
-                canvas.width = window.innerWidth;
-                canvas.height = window.innerHeight - toolbarHeight;
+                canvas.width = container.clientWidth;
+                canvas.height = container.clientHeight - toolbarHeight;
                 
                 // Restore canvas content
                 ctx.putImageData(imageData, 0, 0);
