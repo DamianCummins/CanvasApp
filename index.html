@@ -19,6 +19,10 @@
             overflow: hidden; /* Hide scrollbars */
             font-family: 'Inter', sans-serif;
             height: 100%;
+            margin: 0;
+            padding: 0;
+            position: fixed;
+            width: 100%;
         }
         canvas {
             /* Ensure canvas is flush against the edges */
@@ -136,17 +140,19 @@
 
             // --- Coordinate Helpers ---
             function getMouseCoords(e) {
+                const rect = canvas.getBoundingClientRect();
                 return {
-                    x: e.clientX - canvas.offsetLeft,
-                    y: e.clientY - canvas.offsetTop
+                    x: e.clientX - rect.left,
+                    y: e.clientY - rect.top
                 };
             }
 
             // Gets coordinates for a *single* touch object
             function getTouchCoords(touch) {
+                const rect = canvas.getBoundingClientRect();
                 return {
-                    x: touch.clientX - canvas.offsetLeft,
-                    y: touch.clientY - canvas.offsetTop
+                    x: touch.clientX - rect.left,
+                    y: touch.clientY - rect.top
                 };
             }
 
