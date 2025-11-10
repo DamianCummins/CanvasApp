@@ -410,7 +410,7 @@
             // Toolbar collapse/expand toggle
             const toggleButton = document.getElementById('toggleButton');
             const toolbarContent = document.getElementById('toolbarContent');
-            const toolbarTransitionDuration = parseInt(
+            const toolbarTransitionDuration = parseFloat(
                 getComputedStyle(document.documentElement)
                     .getPropertyValue('--toolbar-transition-duration')
             ) * 1000;
