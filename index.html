@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- 
+      This meta tag is crucial for a full-screen mobile experience.
+      It sets the width to the device's width, an initial scale of 1,
+      and prevents users from zooming or scaling, which is ideal for a paint app.
+    -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Toddler Finger Paint</title>
+    <!-- Load Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for the app */
+        body, html {
+            /* Prevent scrolling and pull-to-refresh on mobile */
+            overscroll-behavior: none;
+            overflow: hidden; /* Hide scrollbars */
+            font-family: 'Inter', sans-serif;
+            height: 100%;
+        }
+        canvas {
+            /* Ensure canvas is flush against the edges */
+            display: block;
+            /* This is the magic for multi-touch. 
+              It disables browser gestures like panning, zooming, and scrolling
+              that would normally interfere with drawing.
+            */
+            touch-action: none; 
+        }
+        /* Style for the active/selected button */
+        .brush-button.active {
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.5); /* Blue ring */
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-200">
+
+    <!-- Main container: flex, full-screen, column layout -->
+    <div class="flex flex-col h-screen w-screen">
+        
+        <!-- Canvas: takes up all available space (flex-grow) -->
+        <canvas id="paintCanvas" class="flex-grow bg-white cursor-crosshair"></canvas>
+
+        <!-- Toolbar: at the bottom, wraps content, centered -->
+        <div id="toolbar" class="bg-gray-100 p-4 shadow-inner flex-shrink-0">
+            <div class="flex flex-wrap justify-center items-center gap-4 max-w-4xl mx-auto">
+
+                <!-- Color Brushes -->
+                <button data-color="#E53E3E" class="brush-button w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-red-600 border-4 border-white shadow-md transition-transform"></button>
+                <button data-color="#3B82F6" class="brush-button w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-blue-500 border-4 border-white shadow-md transition-transform"></button>
+                <button data-color="#10B981" class="brush-button w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-green-500 border-4 border-white shadow-md transition-transform"></button>
+                <button data-color="#F59E0B" class="brush-button w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-yellow-500 border-4 border-white shadow-md transition-transform"></button>
+                <button data-color="#000000" class="brush-button w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-black border-4 border-white shadow-md transition-transform"></button>
+
+                <!-- Separator -->
+                <div class="w-px h-16 bg-gray-300 hidden sm:block"></div>
+
+                <!-- Size Brushes -->
+                <button data-size="10" class="brush-button w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gray-300 border-4 border-white shadow-md flex items-center justify-center transition-transform">
+                    <div class="w-3 h-3 rounded-full bg-gray-700"></div>
+                </button>
+                <button data-size="30" class="brush-button w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gray-300 border-4 border-white shadow-md flex items-center justify-center transition-transform">
+                    <div class="w-6 h-6 rounded-full bg-gray-700"></div>
+                </button>
+                <button data-size="60" class="brush-button w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gray-300 border-4 border-white shadow-md flex items-center justify-center transition-transform">
+                    <div class="w-10 h-10 rounded-full bg-gray-700"></div>
+                </button>
+                
+                <!-- Separator -->
+                <div class="w-px h-16 bg-gray-300 hidden sm:block"></div>
+
+                <!-- Clear Button -->
+                <button id="clearButton" class="w-28 h-14 sm:w-32 sm:h-16 bg-red-500 text-white text-lg sm:text-xl font-bold rounded-lg shadow-md transition-transform active:scale-95">
+                    Clear
+                </button>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.addEventListener('load', () => {
+            const canvas = document.getElementById('paintCanvas');
+            const toolbar = document.getElementById('toolbar');
+            const ctx = canvas.getContext('2d');
+
+            // --- State Variables ---
+            let mouseDrawing = false; // For tracking mouse state
+            let brushColor = '#E53E3E'; // Default to red
+            let brushSize = 30; // Default to medium-large
+            
+            // Map to store active touches and their properties
+            // Key: touch.identifier, Value: { x, y, color, size }
+            const activeTouches = new Map();
+
+            // Function to set the canvas size and clear it
+            function initializeCanvas() {
+                const toolbarHeight = toolbar.offsetHeight;
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight - toolbarHeight;
+                
+                // Set background to white
+                ctx.fillStyle = "white";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // Set default line styles
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+            }
+            
+            // Function to resize canvas while preserving drawing
+            function resizeCanvas() {
+                // Save canvas content
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+                const toolbarHeight = toolbar.offsetHeight;
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight - toolbarHeight;
+                
+                // Restore canvas content
+                ctx.putImageData(imageData, 0, 0);
+
+                // Re-apply line styles
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+            }
+
+            // Set initial canvas size
+            initializeCanvas();
+
+            // Resize canvas when window is resized
+            window.addEventListener('resize', resizeCanvas);
+
+            // --- Coordinate Helpers ---
+            function getMouseCoords(e) {
+                return {
+                    x: e.clientX - canvas.offsetLeft,
+                    y: e.clientY - canvas.offsetTop
+                };
+            }
+
+            // Gets coordinates for a *single* touch object
+            function getTouchCoords(touch) {
+                return {
+                    x: touch.clientX - canvas.offsetLeft,
+                    y: touch.clientY - canvas.offsetTop
+                };
+            }
+
+            // --- Mouse Drawing Handlers (for single-pointer mouse) ---
+            function startMouseDraw(e) {
+                mouseDrawing = true;
+                const { x, y } = getMouseCoords(e);
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineWidth = brushSize;
+                ctx.strokeStyle = brushColor;
+            }
+
+            function mouseDraw(e) {
+                if (!mouseDrawing) return;
+                const { x, y } = getMouseCoords(e);
+                ctx.lineTo(x, y);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+            }
+
+            function stopMouseDraw() {
+                mouseDrawing = false;
+                ctx.closePath();
+            }
+
+            // --- Multi-Touch Drawing Handlers ---
+            function handleTouchStart(e) {
+                e.preventDefault(); // Prevent scrolling, zooming, etc.
+                const touches = e.changedTouches;
+
+                for (let i = 0; i < touches.length; i++) {
+                    const touch = touches[i];
+                    const { x, y } = getTouchCoords(touch);
+                    
+                    // Store this new touch's state
+                    activeTouches.set(touch.identifier, {
+                        x: x,
+                        y: y,
+                        color: brushColor, // Use the *currently* selected color
+                        size: brushSize    // Use the *currently* selected size
+                    });
+
+                    // Start a new line for this specific finger
+                    ctx.beginPath();
+                    ctx.lineWidth = brushSize;
+                    ctx.strokeStyle = brushColor;
+                    ctx.moveTo(x, y);
+                }
+            }
+
+            function handleTouchMove(e) {
+                e.preventDefault();
+                const touches = e.changedTouches;
+
+                for (let i = 0; i < touches.length; i++) {
+                    const touch = touches[i];
+                    // Find the stored data for this specific finger
+                    const touchData = activeTouches.get(touch.identifier);
+
+                    if (touchData) {
+                        const { x, y } = getTouchCoords(touch);
+
+                        // Draw a line from this finger's last known position to its new one
+                        ctx.beginPath(); // Start a new path segment
+                        ctx.moveTo(touchData.x, touchData.y); // From old position
+                        ctx.lineWidth = touchData.size;   // Use this finger's stored size
+                        ctx.strokeStyle = touchData.color; // Use this finger's stored color
+                        ctx.lineTo(x, y); // To new position
+                        ctx.stroke(); // Draw
+                        
+                        // Update this finger's last known position
+                        touchData.x = x;
+                        touchData.y = y;
+                    }
+                }
+            }
+
+            function handleTouchEnd(e) {
+                e.preventDefault();
+                const touches = e.changedTouches;
+
+                for (let i = 0; i < touches.length; i++) {
+                    const touch = touches[i];
+                    const touchData = activeTouches.get(touch.identifier);
+
+                    if (touchData) {
+                        ctx.closePath();
+                        // This finger is lifted, so stop tracking it
+                        activeTouches.delete(touch.identifier);
+                    }
+                }
+            }
+
+
+            // --- Event Listeners for Canvas ---
+            
+            // Mouse events (for desktop)
+            canvas.addEventListener('mousedown', startMouseDraw);
+            canvas.addEventListener('mousemove', mouseDraw);
+            canvas.addEventListener('mouseup', stopMouseDraw);
+            canvas.addEventListener('mouseout', stopMouseDraw);
+
+            // Touch events (for mobile/tablet)
+            canvas.addEventListener('touchstart', handleTouchStart);
+            canvas.addEventListener('touchmove', handleTouchMove);
+            canvas.addEventListener('touchend', handleTouchEnd);
+            canvas.addEventListener('touchcancel', handleTouchEnd);
+
+            // --- Toolbar Button Listeners ---
+            const buttons = document.querySelectorAll('.brush-button');
+            
+            buttons.forEach(button => {
+                button.addEventListener('click', () => {
+                    // Handle highlighting for color/size groups separately
+                    if (button.dataset.color) {
+                        // Remove 'active' from all color buttons
+                        document.querySelectorAll('[data-color]').forEach(btn => btn.classList.remove('active'));
+                        brushColor = button.dataset.color;
+                    }
+                    if (button.dataset.size) {
+                         // Remove 'active' from all size buttons
+                        document.querySelectorAll('[data-size]').forEach(btn => btn.classList.remove('active'));
+                        brushSize = parseInt(button.dataset.size, 10);
+                    }
+                    
+                    // Add 'active' to the clicked button
+                    button.classList.add('active');
+                });
+            });
+
+            // Clear button
+            document.getElementById('clearButton').addEventListener('click', () => {
+                // Clear the canvas and reset to white background
+                initializeCanvas();
+                // Stop tracking all touches, as the canvas is clear
+                activeTouches.clear();
+            });
+            
+            // Set default active buttons
+            document.querySelector('[data-color="#E53E3E"]').classList.add('active');
+            document.querySelector('[data-size="30"]').classList.add('active');
+
+        });
+    </script>
+</body>
+</html>
+
+
