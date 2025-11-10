@@ -81,6 +81,11 @@
                 <!-- Separator -->
                 <div class="w-px h-16 bg-gray-300 hidden sm:block"></div>
 
+                <!-- Undo Button -->
+                <button id="undoButton" class="w-28 h-14 sm:w-32 sm:h-16 bg-blue-500 text-white text-lg sm:text-xl font-bold rounded-lg shadow-md transition-transform active:scale-95">
+                    Undo
+                </button>
+
                 <!-- Clear Button -->
                 <button id="clearButton" class="w-28 h-14 sm:w-32 sm:h-16 bg-red-500 text-white text-lg sm:text-xl font-bold rounded-lg shadow-md transition-transform active:scale-95">
                     Clear
@@ -115,6 +120,36 @@
             // Map to store active touches and their properties
             // Key: touch.identifier, Value: { x, y, color, size }
             const activeTouches = new Map();
+            
+            // History for undo functionality
+            const canvasHistory = [];
+            const maxHistorySize = 20; // Limit history to prevent memory issues
+
+            // Function to save current canvas state to history
+            function saveCanvasState() {
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                canvasHistory.push(imageData);
+                
+                // Limit history size
+                if (canvasHistory.length > maxHistorySize) {
+                    canvasHistory.shift();
+                }
+                
+                // Update undo button state
+                updateUndoButton();
+            }
+            
+            // Function to update undo button enabled/disabled state
+            function updateUndoButton() {
+                const undoButton = document.getElementById('undoButton');
+                if (canvasHistory.length > 0) {
+                    undoButton.disabled = false;
+                    undoButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                } else {
+                    undoButton.disabled = true;
+                    undoButton.classList.add('opacity-50', 'cursor-not-allowed');
+                }
+            }
 
             // Function to set the canvas size and clear it
             function initializeCanvas() {
@@ -130,6 +165,9 @@
                 // Set default line styles
                 ctx.lineCap = 'round';
                 ctx.lineJoin = 'round';
+                
+                // Save initial state
+                saveCanvasState();
             }
             
             // Function to resize canvas while preserving drawing
@@ -194,8 +232,11 @@
             }
 
             function stopMouseDraw() {
-                mouseDrawing = false;
-                ctx.closePath();
+                if (mouseDrawing) {
+                    mouseDrawing = false;
+                    ctx.closePath();
+                    saveCanvasState(); // Save state after drawing
+                }
             }
 
             // --- Multi-Touch Drawing Handlers ---
@@ -264,6 +305,11 @@
                         activeTouches.delete(touch.identifier);
                     }
                 }
+                
+                // Save state when all touches are done
+                if (activeTouches.size === 0) {
+                    saveCanvasState();
+                }
             }
 
 
@@ -303,8 +349,31 @@
                 });
             });
 
+            // Undo button
+            document.getElementById('undoButton').addEventListener('click', () => {
+                if (canvasHistory.length > 0) {
+                    // Remove current state
+                    canvasHistory.pop();
+                    
+                    // Restore previous state or reset to white if no history
+                    if (canvasHistory.length > 0) {
+                        const previousState = canvasHistory[canvasHistory.length - 1];
+                        ctx.putImageData(previousState, 0, 0);
+                    } else {
+                        // Reset to white background if no history left
+                        ctx.fillStyle = "white";
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        saveCanvasState(); // Save the blank state
+                    }
+                    
+                    updateUndoButton();
+                }
+            });
+
             // Clear button
             document.getElementById('clearButton').addEventListener('click', () => {
+                // Clear history
+                canvasHistory.length = 0;
                 // Clear the canvas and reset to white background
                 initializeCanvas();
                 // Stop tracking all touches, as the canvas is clear
