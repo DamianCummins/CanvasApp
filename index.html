@@ -12,11 +12,15 @@
     <!-- Load Tailwind CSS for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        :root {
+            --toolbar-transition-duration: 0.3s;
+        }
+
         /* Custom styles for the app */
         body, html {
             /* Prevent scrolling and pull-to-refresh on mobile */
             overscroll-behavior: none;
-            overflow: hidden; /* Hide scrollbars */
+            overflow: hidden;
             font-family: 'Inter', sans-serif;
             height: 100%;
             margin: 0;
@@ -24,11 +28,13 @@
             position: fixed;
             width: 100%;
         }
+
         #appContainer {
             /* Use dynamic viewport height for mobile browsers */
             height: 100vh;
             height: 100dvh; /* Newer browsers - accounts for mobile browser chrome */
         }
+
         canvas {
             /* Ensure canvas is flush against the edges */
             display: block;
@@ -38,9 +44,10 @@
             */
             touch-action: none; 
         }
+
         /* Style for the active/selected button */
         .brush-button.active {
-            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.5); /* Blue ring */
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.5);
             transform: scale(1.1);
         }
         
@@ -48,7 +55,8 @@
         #toolbarContent {
             max-height: 500px;
             overflow: hidden;
-            transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
+            transition: max-height var(--toolbar-transition-duration) ease-in-out, 
+                        opacity var(--toolbar-transition-duration) ease-in-out;
             opacity: 1;
         }
         
@@ -58,7 +66,7 @@
         }
         
         #toggleButton {
-            transition: transform 0.3s ease-in-out;
+            transition: transform var(--toolbar-transition-duration) ease-in-out;
         }
         
         #toggleButton.collapsed {
@@ -79,7 +87,7 @@
             <!-- Toggle button at the top -->
             <div class="flex justify-center py-2 border-b border-gray-300">
                 <button id="toggleButton" class="w-12 h-8 bg-gray-300 hover:bg-gray-400 rounded-lg shadow-md flex items-center justify-center transition-all active:scale-95">
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                         <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                 </button>
@@ -88,73 +96,66 @@
             <!-- Toolbar content that can be collapsed -->
             <div id="toolbarContent" class="p-4">
                 <div class="flex flex-wrap justify-center items-center gap-4 max-w-4xl mx-auto">
+                    <!-- Color Brushes -->
+                    <button data-color="#E53E3E" class="brush-button w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-red-600 border-4 border-white shadow-md transition-transform"></button>
+                    <button data-color="#3B82F6" class="brush-button w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-blue-500 border-4 border-white shadow-md transition-transform"></button>
+                    <button data-color="#10B981" class="brush-button w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-green-500 border-4 border-white shadow-md transition-transform"></button>
+                    <button data-color="#F59E0B" class="brush-button w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-yellow-500 border-4 border-white shadow-md transition-transform"></button>
+                    <button data-color="#000000" class="brush-button w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-black border-4 border-white shadow-md transition-transform"></button>
 
-                <!-- Color Brushes -->
-                <button data-color="#E53E3E" class="brush-button w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-red-600 border-4 border-white shadow-md transition-transform"></button>
-                <button data-color="#3B82F6" class="brush-button w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-blue-500 border-4 border-white shadow-md transition-transform"></button>
-                <button data-color="#10B981" class="brush-button w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-green-500 border-4 border-white shadow-md transition-transform"></button>
-                <button data-color="#F59E0B" class="brush-button w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-yellow-500 border-4 border-white shadow-md transition-transform"></button>
-                <button data-color="#000000" class="brush-button w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-black border-4 border-white shadow-md transition-transform"></button>
+                    <!-- Separator -->
+                    <div class="w-px h-16 bg-gray-300 hidden sm:block"></div>
 
-                <!-- Separator -->
-                <div class="w-px h-16 bg-gray-300 hidden sm:block"></div>
+                    <!-- Size Brushes -->
+                    <button data-size="10" class="brush-button w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gray-300 border-4 border-white shadow-md flex items-center justify-center transition-transform">
+                        <div class="w-3 h-3 rounded-full bg-gray-700"></div>
+                    </button>
+                    <button data-size="30" class="brush-button w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gray-300 border-4 border-white shadow-md flex items-center justify-center transition-transform">
+                        <div class="w-6 h-6 rounded-full bg-gray-700"></div>
+                    </button>
+                    <button data-size="60" class="brush-button w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gray-300 border-4 border-white shadow-md flex items-center justify-center transition-transform">
+                        <div class="w-10 h-10 rounded-full bg-gray-700"></div>
+                    </button>
+                    
+                    <!-- Separator -->
+                    <div class="w-px h-16 bg-gray-300 hidden sm:block"></div>
 
-                <!-- Size Brushes -->
-                <button data-size="10" class="brush-button w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gray-300 border-4 border-white shadow-md flex items-center justify-center transition-transform">
-                    <div class="w-3 h-3 rounded-full bg-gray-700"></div>
-                </button>
-                <button data-size="30" class="brush-button w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gray-300 border-4 border-white shadow-md flex items-center justify-center transition-transform">
-                    <div class="w-6 h-6 rounded-full bg-gray-700"></div>
-                </button>
-                <button data-size="60" class="brush-button w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gray-300 border-4 border-white shadow-md flex items-center justify-center transition-transform">
-                    <div class="w-10 h-10 rounded-full bg-gray-700"></div>
-                </button>
-                
-                <!-- Separator -->
-                <div class="w-px h-16 bg-gray-300 hidden sm:block"></div>
+                    <!-- Undo Button -->
+                    <button id="undoButton" class="w-14 h-14 sm:w-16 sm:h-16 bg-blue-500 text-white rounded-lg shadow-md transition-transform active:scale-95 flex items-center justify-center">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <path d="M9 14L4 9L9 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M20 20V13C20 11.9391 19.5786 10.9217 18.8284 10.1716C18.0783 9.42143 17.0609 9 16 9H4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
 
-                <!-- Undo Button -->
-                <button id="undoButton" class="w-14 h-14 sm:w-16 sm:h-16 bg-blue-500 text-white rounded-lg shadow-md transition-transform active:scale-95 flex items-center justify-center">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M9 14L4 9L9 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M20 20V13C20 11.9391 19.5786 10.9217 18.8284 10.1716C18.0783 9.42143 17.0609 9 16 9H4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </button>
-
-                <!-- Clear Button -->
-                <button id="clearButton" class="w-14 h-14 sm:w-16 sm:h-16 bg-red-500 text-white rounded-lg shadow-md transition-transform active:scale-95 flex items-center justify-center">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </button>
-
+                    <!-- Clear Button -->
+                    <button id="clearButton" class="w-14 h-14 sm:w-16 sm:h-16 bg-red-500 text-white rounded-lg shadow-md transition-transform active:scale-95 flex items-center justify-center">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // Fix viewport height for mobile browsers
-        function setAppHeight() {
-            const container = document.getElementById('appContainer');
-            const vh = window.innerHeight;
-            container.style.height = vh + 'px';
-        }
-        
-        // Set height on load and resize
-        window.addEventListener('load', setAppHeight);
-        window.addEventListener('resize', setAppHeight);
-        
         window.addEventListener('load', () => {
+            // ========================================
+            // DOM ELEMENTS
+            // ========================================
             const canvas = document.getElementById('paintCanvas');
             const toolbar = document.getElementById('toolbar');
             const ctx = canvas.getContext('2d');
+            const appContainer = document.getElementById('appContainer');
 
-            // --- State Variables ---
-            let mouseDrawing = false; // For tracking mouse state
-            let brushColor = '#E53E3E'; // Default to red
-            let brushSize = 30; // Default to medium-large
+            // ========================================
+            // STATE VARIABLES
+            // ========================================
+            let mouseDrawing = false;
+            let brushColor = '#E53E3E';
+            let brushSize = 30;
             
             // Map to store active touches and their properties
             // Key: touch.identifier, Value: { x, y, color, size }
@@ -162,23 +163,23 @@
             
             // History for undo functionality
             const canvasHistory = [];
-            const maxHistorySize = 20; // Limit history to prevent memory issues
+            const maxHistorySize = 20;
 
-            // Function to save current canvas state to history
+            // ========================================
+            // CANVAS MANAGEMENT
+            // ========================================
+            
             function saveCanvasState() {
                 const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
                 canvasHistory.push(imageData);
                 
-                // Limit history size
                 if (canvasHistory.length > maxHistorySize) {
                     canvasHistory.shift();
                 }
                 
-                // Update undo button state
                 updateUndoButton();
             }
             
-            // Function to update undo button enabled/disabled state
             function updateUndoButton() {
                 const undoButton = document.getElementById('undoButton');
                 if (canvasHistory.length > 0) {
@@ -190,50 +191,40 @@
                 }
             }
 
-            // Function to set the canvas size and clear it
+            function setAppHeight() {
+                const vh = window.innerHeight;
+                appContainer.style.height = vh + 'px';
+            }
+
             function initializeCanvas() {
-                const container = document.getElementById('appContainer');
                 const toolbarHeight = toolbar.offsetHeight;
-                canvas.width = container.clientWidth;
-                canvas.height = container.clientHeight - toolbarHeight;
+                canvas.width = appContainer.clientWidth;
+                canvas.height = appContainer.clientHeight - toolbarHeight;
                 
-                // Set background to white
                 ctx.fillStyle = "white";
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-                // Set default line styles
                 ctx.lineCap = 'round';
                 ctx.lineJoin = 'round';
                 
-                // Save initial state
                 saveCanvasState();
             }
             
-            // Function to resize canvas while preserving drawing
             function resizeCanvas() {
-                // Save canvas content
                 const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-
-                const container = document.getElementById('appContainer');
                 const toolbarHeight = toolbar.offsetHeight;
-                canvas.width = container.clientWidth;
-                canvas.height = container.clientHeight - toolbarHeight;
                 
-                // Restore canvas content
+                canvas.width = appContainer.clientWidth;
+                canvas.height = appContainer.clientHeight - toolbarHeight;
+                
                 ctx.putImageData(imageData, 0, 0);
-
-                // Re-apply line styles
                 ctx.lineCap = 'round';
                 ctx.lineJoin = 'round';
             }
 
-            // Set initial canvas size
-            initializeCanvas();
-
-            // Resize canvas when window is resized
-            window.addEventListener('resize', resizeCanvas);
-
-            // --- Coordinate Helpers ---
+            // ========================================
+            // COORDINATE HELPERS
+            // ========================================
+            
             function getMouseCoords(e) {
                 const rect = canvas.getBoundingClientRect();
                 return {
@@ -242,7 +233,6 @@
                 };
             }
 
-            // Gets coordinates for a *single* touch object
             function getTouchCoords(touch) {
                 const rect = canvas.getBoundingClientRect();
                 return {
@@ -251,7 +241,10 @@
                 };
             }
 
-            // --- Mouse Drawing Handlers (for single-pointer mouse) ---
+            // ========================================
+            // MOUSE DRAWING HANDLERS
+            // ========================================
+            
             function startMouseDraw(e) {
                 mouseDrawing = true;
                 const { x, y } = getMouseCoords(e);
@@ -274,28 +267,29 @@
                 if (mouseDrawing) {
                     mouseDrawing = false;
                     ctx.closePath();
-                    saveCanvasState(); // Save state after drawing
+                    saveCanvasState();
                 }
             }
 
-            // --- Multi-Touch Drawing Handlers ---
+            // ========================================
+            // MULTI-TOUCH DRAWING HANDLERS
+            // ========================================
+            
             function handleTouchStart(e) {
-                e.preventDefault(); // Prevent scrolling, zooming, etc.
+                e.preventDefault();
                 const touches = e.changedTouches;
 
                 for (let i = 0; i < touches.length; i++) {
                     const touch = touches[i];
                     const { x, y } = getTouchCoords(touch);
                     
-                    // Store this new touch's state
                     activeTouches.set(touch.identifier, {
                         x: x,
                         y: y,
-                        color: brushColor, // Use the *currently* selected color
-                        size: brushSize    // Use the *currently* selected size
+                        color: brushColor,
+                        size: brushSize
                     });
 
-                    // Start a new line for this specific finger
                     ctx.beginPath();
                     ctx.lineWidth = brushSize;
                     ctx.strokeStyle = brushColor;
@@ -309,21 +303,18 @@
 
                 for (let i = 0; i < touches.length; i++) {
                     const touch = touches[i];
-                    // Find the stored data for this specific finger
                     const touchData = activeTouches.get(touch.identifier);
 
                     if (touchData) {
                         const { x, y } = getTouchCoords(touch);
 
-                        // Draw a line from this finger's last known position to its new one
-                        ctx.beginPath(); // Start a new path segment
-                        ctx.moveTo(touchData.x, touchData.y); // From old position
-                        ctx.lineWidth = touchData.size;   // Use this finger's stored size
-                        ctx.strokeStyle = touchData.color; // Use this finger's stored color
-                        ctx.lineTo(x, y); // To new position
-                        ctx.stroke(); // Draw
+                        ctx.beginPath();
+                        ctx.moveTo(touchData.x, touchData.y);
+                        ctx.lineWidth = touchData.size;
+                        ctx.strokeStyle = touchData.color;
+                        ctx.lineTo(x, y);
+                        ctx.stroke();
                         
-                        // Update this finger's last known position
                         touchData.x = x;
                         touchData.y = y;
                     }
@@ -340,50 +331,53 @@
 
                     if (touchData) {
                         ctx.closePath();
-                        // This finger is lifted, so stop tracking it
                         activeTouches.delete(touch.identifier);
                     }
                 }
                 
-                // Save state when all touches are done
                 if (activeTouches.size === 0) {
                     saveCanvasState();
                 }
             }
 
-
-            // --- Event Listeners for Canvas ---
+            // ========================================
+            // EVENT LISTENERS
+            // ========================================
             
-            // Mouse events (for desktop)
+            // Canvas: Mouse events
             canvas.addEventListener('mousedown', startMouseDraw);
             canvas.addEventListener('mousemove', mouseDraw);
             canvas.addEventListener('mouseup', stopMouseDraw);
             canvas.addEventListener('mouseout', stopMouseDraw);
 
-            // Touch events (for mobile/tablet)
+            // Canvas: Touch events
             canvas.addEventListener('touchstart', handleTouchStart);
             canvas.addEventListener('touchmove', handleTouchMove);
             canvas.addEventListener('touchend', handleTouchEnd);
             canvas.addEventListener('touchcancel', handleTouchEnd);
 
-            // --- Toolbar Button Listeners ---
-            const buttons = document.querySelectorAll('.brush-button');
+            // Window: Resize events
+            window.addEventListener('resize', () => {
+                setAppHeight();
+                resizeCanvas();
+            });
+
+            // ========================================
+            // TOOLBAR CONTROLS
+            // ========================================
             
+            // Brush buttons (color and size)
+            const buttons = document.querySelectorAll('.brush-button');
             buttons.forEach(button => {
                 button.addEventListener('click', () => {
-                    // Handle highlighting for color/size groups separately
                     if (button.dataset.color) {
-                        // Remove 'active' from all color buttons
                         document.querySelectorAll('[data-color]').forEach(btn => btn.classList.remove('active'));
                         brushColor = button.dataset.color;
                     }
                     if (button.dataset.size) {
-                         // Remove 'active' from all size buttons
                         document.querySelectorAll('[data-size]').forEach(btn => btn.classList.remove('active'));
                         brushSize = parseInt(button.dataset.size, 10);
                     }
-                    
-                    // Add 'active' to the clicked button
                     button.classList.add('active');
                 });
             });
@@ -391,18 +385,15 @@
             // Undo button
             document.getElementById('undoButton').addEventListener('click', () => {
                 if (canvasHistory.length > 0) {
-                    // Remove current state
                     canvasHistory.pop();
                     
-                    // Restore previous state or reset to white if no history
                     if (canvasHistory.length > 0) {
                         const previousState = canvasHistory[canvasHistory.length - 1];
                         ctx.putImageData(previousState, 0, 0);
                     } else {
-                        // Reset to white background if no history left
                         ctx.fillStyle = "white";
                         ctx.fillRect(0, 0, canvas.width, canvas.height);
-                        saveCanvasState(); // Save the blank state
+                        saveCanvasState();
                     }
                     
                     updateUndoButton();
@@ -411,22 +402,19 @@
 
             // Clear button
             document.getElementById('clearButton').addEventListener('click', () => {
-                // Clear history
                 canvasHistory.length = 0;
-                // Clear the canvas and reset to white background
                 initializeCanvas();
-                // Stop tracking all touches, as the canvas is clear
                 activeTouches.clear();
             });
             
-            // Set default active buttons
-            document.querySelector('[data-color="#E53E3E"]').classList.add('active');
-            document.querySelector('[data-size="30"]').classList.add('active');
-            
-            // --- Toolbar Collapse/Expand Functionality ---
+            // Toolbar collapse/expand toggle
             const toggleButton = document.getElementById('toggleButton');
             const toolbarContent = document.getElementById('toolbarContent');
-            let isToolbarExpanded = true; // Expanded by default
+            const toolbarTransitionDuration = parseInt(
+                getComputedStyle(document.documentElement)
+                    .getPropertyValue('--toolbar-transition-duration')
+            ) * 1000;
+            let isToolbarExpanded = true;
             
             toggleButton.addEventListener('click', () => {
                 isToolbarExpanded = !isToolbarExpanded;
@@ -439,15 +427,23 @@
                     toggleButton.classList.add('collapsed');
                 }
                 
-                // Resize canvas after toolbar animation completes
                 setTimeout(() => {
                     resizeCanvas();
-                }, 300);
+                }, toolbarTransitionDuration);
             });
 
+            // ========================================
+            // INITIALIZATION
+            // ========================================
+            
+            setAppHeight();
+            initializeCanvas();
+            
+            // Set default active buttons
+            document.querySelector('[data-color="#E53E3E"]').classList.add('active');
+            document.querySelector('[data-size="30"]').classList.add('active');
         });
     </script>
 </body>
 </html>
-
 
